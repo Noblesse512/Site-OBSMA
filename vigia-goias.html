@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIGIA GOIÁS AI — Vigilância Epidemiológica</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; min-height: 100vh; }
+  select { font-family: inherit; padding: 9px 14px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: #1e293b; font-size: 14px; cursor: pointer; }
+  select:focus { outline: 2px solid #3b82f6; }
+  button { cursor: pointer; font-family: inherit; }
+  .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: rgba(255,255,255,0.5); padding: 11px 18px; font-size: 13px; transition: all 0.2s; }
+  .tab-btn.active { border-bottom-color: #60a5fa; color: #93c5fd; font-weight: 700; }
+  .row-item { transition: background 0.15s; }
+  .row-item:hover { background: #f0f9ff !important; }
+  .card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const CITIES = {
+  "Goiânia":                { chuva:128, temp:31, casos:47, regiao:"Centro" },
+  "Aparecida de Goiânia":   { chuva:114, temp:30, casos:33, regiao:"Centro" },
+  "Anápolis":               { chuva:109, temp:29, casos:28, regiao:"Centro" },
+  "Senador Canedo":         { chuva:117, temp:31, casos:31, regiao:"Centro" },
+  "Trindade":               { chuva:105, temp:30, casos:25, regiao:"Centro" },
+  "Águas Lindas de Goiás":  { chuva: 81, temp:29, casos:19, regiao:"Centro" },
+  "Palmeiras de Goiás":     { chuva: 98, temp:29, casos:20, regiao:"Centro" },
+  "Rio Verde":              { chuva: 96, temp:27, casos:21, regiao:"Sudoeste" },
+  "Jataí":                  { chuva: 91, temp:27, casos:20, regiao:"Sudoeste" },
+  "Luziânia":               { chuva: 72, temp:28, casos:14, regiao:"Leste" },
+  "Valparaíso de Goiás":    { chuva: 76, temp:28, casos:17, regiao:"Leste" },
+  "Formosa":                { chuva: 64, temp:28, casos: 9, regiao:"Leste" },
+  "Novo Gama":              { chuva: 78, temp:29, casos:16, regiao:"Leste" },
+  "Catalão":                { chuva: 83, temp:29, casos:19, regiao:"Leste" },
+  "Caldas Novas":           { chuva: 94, temp:32, casos:24, regiao:"Sul" },
+  "Itumbiara":              { chuva: 88, temp:31, casos:22, regiao:"Sul" },
+  "Morrinhos":              { chuva: 87, temp:30, casos:18, regiao:"Sul" },
+  "Porangatu":              { chuva: 88, temp:33, casos:18, regiao:"Norte" },
+  "Minaçu":                 { chuva: 92, temp:34, casos:16, regiao:"Norte" },
+  "Uruaçu":                 { chuva: 85, temp:32, casos:14, regiao:"Norte" },
+  "Niquelândia":            { chuva: 79, temp:33, casos:12, regiao:"Norte" },
+  "Goiás (cidade)":         { chuva: 74, temp:30, casos:11, regiao:"Oeste" },
+};
+
+const HIST_LABELS = ["Jan","Fev","Mar","Abr","Mai","Jun"];
+const HISTORICO = {
+  "Goiânia":               [72,89,95,88,91,85],
+  "Aparecida de Goiânia":  [61,74,80,73,78,70],
+  "Anápolis":              [55,68,74,67,71,65],
+  "Senador Canedo":        [68,80,86,79,83,77],
+  "Trindade":              [60,72,78,70,74,68],
+  "Caldas Novas":          [53,64,70,62,65,59],
+  "Porangatu":             [48,58,63,55,59,52],
+  "Minaçu":               [50,61,66,58,62,57],
+  "default":               [44,55,60,52,56,50],
+};
+
+function calcScore(chuva, temp, casos) {
+  const c=Number(chuva), t=Number(temp), cs=Number(casos);
+  return Math.min(
+    (c>100?40:c>75?25:10) + (t>=32?30:t>=30?20:10) + (cs>30?35:cs>15?22:10),
+    98
+  );
+}
+function getDoenca(chuva, casos, temp) {
+  const c=Number(chuva), cs=Number(casos), t=Number(temp);
+  if(c>110) return {nome:"Dengue",       icon:"🦟", cor:"#dc2626"};
+  if(t>=33)  return {nome:"Leishmaniose", icon:"🐛", cor:"#d97706"};
+  if(cs>25)  return {nome:"Dengue",       icon:"🦟", cor:"#dc2626"};
+  if(c>80)   return {nome:"Oropouche",    icon:"🦠", cor:"#7c3aed"};
+  return             {nome:"Leptospirose",icon:"💧", cor:"#0284c7"};
+}
+function getRisco(r) {
+  if(r>=80) return {label:"Crítico",  bg:"#fee2e2", text:"#991b1b", bar:"#dc2626"};
+  if(r>=60) return {label:"Alto",     bg:"#ffedd5", text:"#9a3412", bar:"#ea580c"};
+  if(r>=40) return {label:"Moderado", bg:"#fef9c3", text:"#854d0e", bar:"#ca8a04"};
+  return           {label:"Baixo",    bg:"#dcfce7", text:"#166534", bar:"#16a34a"};
+}
+
+function App() {
+  const [cidade, setCidade] = useState("Goiânia");
+  const [tab, setTab] = useState("painel");
+
+  const d   = CITIES[cidade];
+  const risco  = calcScore(d.chuva, d.temp, d.casos);
+  const doenca = getDoenca(d.chuva, d.casos, d.temp);
+  const ri     = getRisco(risco);
+  const hist   = HISTORICO[cidade] || HISTORICO["default"];
+
+  const ranking = useMemo(() =>
+    Object.entries(CITIES)
+      .map(([nome, dd]) => ({ nome, risco: calcScore(dd.chuva, dd.temp, dd.casos), regiao: dd.regiao }))
+      .sort((a, b) => b.risco - a.risco),
+  []);
+
+  const regioes = [...new Set(Object.values(CITIES).map(x => x.regiao))].sort();
+  const porRegiao = regioes.map(reg => {
+    const cids = Object.entries(CITIES).filter(([, v]) => v.regiao === reg);
+    const avg  = Math.round(cids.reduce((s, [, v]) => s + calcScore(v.chuva, v.temp, v.casos), 0) / cids.length);
+    return { reg, avg, n: cids.length };
+  }).sort((a, b) => b.avg - a.avg);
+
+  const hoje = new Date().toLocaleDateString("pt-BR", { day:"2-digit", month:"long", year:"numeric" });
+
+  return (
+    <div style={{ background:"#f1f5f9", minHeight:"100vh", paddingBottom:60 }}>
+
+      {/* ── HEADER ── */}
+      <div style={{ background:"#0f2a47", padding:"0 28px", display:"flex", alignItems:"center", gap:14, height:60 }}>
+        <div style={{ width:36, height:36, borderRadius:8, background:"#2563eb", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>🛡️</div>
+        <div>
+          <p style={{ color:"rgba(255,255,255,0.45)", fontSize:9, letterSpacing:2, textTransform:"uppercase", margin:0 }}>Estado de Goiás — Secretaria de Saúde</p>
+          <p style={{ color:"white", fontSize:15, fontWeight:700, margin:0, letterSpacing:0.3 }}>VIGIA GOIÁS AI &mdash; Vigilância Epidemiológica</p>
+        </div>
+        <div style={{ marginLeft:"auto", textAlign:"right" }}>
+          <p style={{ color:"rgba(255,255,255,0.35)", fontSize:10, margin:0 }}>Atualizado em</p>
+          <p style={{ color:"rgba(255,255,255,0.7)", fontSize:11, margin:0, fontWeight:500 }}>{hoje}</p>
+        </div>
+      </div>
+
+      {/* ── TABS ── */}
+      <div style={{ background:"#1a3a5c", display:"flex", padding:"0 28px", borderBottom:"1px solid rgba(255,255,255,0.08)" }}>
+        {[["painel","📊 Painel"], ["ranking","🏆 Ranking"], ["regioes","🗺️ Regiões"]].map(([k, label]) => (
+          <button key={k} className={`tab-btn ${tab===k?"active":""}`} onClick={() => setTab(k)}>{label}</button>
+        ))}
+      </div>
+
+      <div style={{ maxWidth:920, margin:"28px auto", padding:"0 20px" }}>
+
+        {/* ── SELETOR ── */}
+        <div className="card" style={{ padding:"14px 20px", marginBottom:20, display:"flex", alignItems:"center", gap:14, flexWrap:"wrap" }}>
+          <span style={{ fontSize:11, color:"#64748b", fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Município</span>
+          <select value={cidade} onChange={e => setCidade(e.target.value)} style={{ flex:1, minWidth:220 }}>
+            {Object.keys(CITIES).sort().map(c => <option key={c}>{c}</option>)}
+          </select>
+          <span style={{ background:"#e0f2fe", color:"#0369a1", fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20 }}>
+            Região {d.regiao}
+          </span>
+          <span style={{ background:ri.bg, color:ri.text, fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:20 }}>
+            {ri.label}
+          </span>
+        </div>
+
+        {/* ════════ PAINEL ════════ */}
+        {tab === "painel" && (
+          <div>
+            {/* Cards topo */}
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:18 }}>
+              {[
+                { label:"Risco calculado", val:`${risco}%`,  sub:ri.label,                         bg:ri.bg,     col:ri.text   },
+                { label:"Chuva acumulada", val:`${d.chuva}mm`, sub:d.chuva>100?"Elevada":"Normal", bg:"#eff6ff", col:"#1e40af" },
+                { label:"Temperatura",     val:`${d.temp}°C`,  sub:d.temp>=32?"Muito quente":"Quente",bg:"#fff7ed",col:"#c2410c"},
+                { label:"Casos recentes",  val:d.casos,       sub:d.casos>30?"Nível de alerta":"Monitoramento",bg:"#f0fdf4",col:"#15803d"},
+              ].map((item, i) => (
+                <div key={i} style={{ background:item.bg, borderRadius:12, padding:"16px 18px" }}>
+                  <p style={{ fontSize:9, color:item.col, fontWeight:700, opacity:0.65, textTransform:"uppercase", letterSpacing:1, margin:"0 0 6px" }}>{item.label}</p>
+                  <p style={{ fontSize:28, fontWeight:800, color:item.col, margin:"0 0 3px", letterSpacing:-0.5 }}>{item.val}</p>
+                  <p style={{ fontSize:11, color:item.col, margin:0 }}>{item.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+              {/* Coluna esquerda */}
+              <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+                {/* Barra de risco */}
+                <div className="card" style={{ padding:"22px 22px" }}>
+                  <p style={{ fontSize:12, fontWeight:600, color:"#64748b", margin:"0 0 14px" }}>Índice de risco de surto</p>
+                  <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:12 }}>
+                    <span style={{ fontSize:56, fontWeight:800, color:ri.bar, letterSpacing:-2, transition:"color 0.4s" }}>{risco}</span>
+                    <span style={{ fontSize:24, color:ri.bar, fontWeight:700 }}>%</span>
+                  </div>
+                  <div style={{ background:"#e2e8f0", borderRadius:8, height:12, marginBottom:10 }}>
+                    <div style={{ background:ri.bar, borderRadius:8, height:12, width:`${risco}%`, transition:"width 0.7s cubic-bezier(.4,0,.2,1)" }} />
+                  </div>
+                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, color:"#94a3b8", marginTop:4 }}>
+                    <span>0 — Baixo</span><span>50 — Moderado</span><span>80 — Crítico</span>
+                  </div>
+                </div>
+
+                {/* Doença */}
+                <div className="card" style={{ padding:"22px 22px" }}>
+                  <p style={{ fontSize:12, fontWeight:600, color:"#64748b", margin:"0 0 14px" }}>Doença mais provável</p>
+                  <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+                    <div style={{ width:52, height:52, borderRadius:12, background:`${doenca.cor}18`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:24 }}>
+                      {doenca.icon}
+                    </div>
+                    <div>
+                      <p style={{ margin:0, fontSize:22, fontWeight:800, color:doenca.cor }}>{doenca.nome}</p>
+                      <p style={{ margin:"4px 0 0", fontSize:12, color:"#64748b" }}>
+                        {doenca.nome==="Dengue"      ?"Aedes aegypti · vetor principal":
+                         doenca.nome==="Leishmaniose"?"Lutzomyia · clima seco e quente":
+                         doenca.nome==="Oropouche"   ?"Culicoides · vírus arboviral":
+                         "Leptospira · contato com água"}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ marginTop:14, background:"#f8fafc", borderRadius:8, padding:"10px 14px", fontSize:12, color:"#475569", lineHeight:1.7 }}>
+                    {d.chuva>100 && <div>● Chuva elevada favorece criadouros do vetor.</div>}
+                    {d.temp>=30  && <div>● Temperatura alta acelera o ciclo vetorial.</div>}
+                    {d.casos>20  && <div>● Volume de casos indica circulação ativa.</div>}
+                    {d.chuva<=100 && d.temp<30 && d.casos<=20 && <div>Condições dentro do limiar epidemiológico esperado.</div>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Coluna direita */}
+              <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+                {/* Histórico */}
+                <div className="card" style={{ padding:"22px 22px" }}>
+                  <p style={{ fontSize:12, fontWeight:600, color:"#64748b", margin:"0 0 16px" }}>Histórico de risco — últimos 6 meses</p>
+                  <div style={{ display:"flex", alignItems:"flex-end", gap:6, height:100 }}>
+                    {hist.map((val, i) => {
+                      const hri = getRisco(val);
+                      return (
+                        <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+                          <span style={{ fontSize:9, color:"#64748b", fontWeight:600 }}>{val}%</span>
+                          <div style={{ width:"100%", background:hri.bar, borderRadius:"4px 4px 0 0", height:`${(val/100)*80}px`, transition:"height 0.5s" }} />
+                          <span style={{ fontSize:9, color:"#94a3b8" }}>{HIST_LABELS[i]}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Indicadores */}
+                <div className="card" style={{ padding:"22px 22px" }}>
+                  <p style={{ fontSize:12, fontWeight:600, color:"#64748b", margin:"0 0 16px" }}>Indicadores epidemiológicos</p>
+                  {[
+                    { label:"Precipitação acumulada", val:d.chuva, max:200, unit:"mm",  color:"#3b82f6" },
+                    { label:"Temperatura média",       val:d.temp,  max:40,  unit:"°C",  color:"#f97316" },
+                    { label:"Casos notificados",       val:d.casos, max:80,  unit:"",    color:"#22c55e" },
+                    { label:"Índice de risco",         val:risco,   max:100, unit:"%",   color:ri.bar    },
+                  ].map(({ label, val, max, unit, color }) => (
+                    <div key={label} style={{ marginBottom:12 }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
+                        <span style={{ fontSize:12, color:"#64748b" }}>{label}</span>
+                        <span style={{ fontSize:12, fontWeight:700, color:"#1e293b" }}>{val}{unit}</span>
+                      </div>
+                      <div style={{ background:"#e2e8f0", borderRadius:4, height:6 }}>
+                        <div style={{ background:color, borderRadius:4, height:6, width:`${Math.round((val/max)*100)}%`, transition:"width 0.6s" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════════ RANKING ════════ */}
+        {tab === "ranking" && (
+          <div className="card" style={{ overflow:"hidden" }}>
+            <div style={{ padding:"16px 22px", borderBottom:"1px solid #e2e8f0", background:"#f8fafc", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <p style={{ margin:0, fontSize:15, fontWeight:700, color:"#1e293b" }}>Ranking de risco — {Object.keys(CITIES).length} municípios</p>
+              <span style={{ fontSize:12, color:"#64748b" }}>Maio 2026</span>
+            </div>
+            {ranking.map((item, i) => {
+              const ri2  = getRisco(item.risco);
+              const isSel = item.nome === cidade;
+              const dd   = CITIES[item.nome];
+              const d2   = getDoenca(dd.chuva, dd.casos, dd.temp);
+              return (
+                <div key={item.nome} className="row-item"
+                  onClick={() => { setCidade(item.nome); setTab("painel"); }}
+                  style={{ padding:"12px 22px", borderBottom:"1px solid #f1f5f9", cursor:"pointer", background:isSel?"#eff6ff":"transparent", display:"flex", alignItems:"center", gap:12 }}>
+                  <span style={{ fontSize:12, fontWeight:700, color:"#94a3b8", minWidth:24, textAlign:"right" }}>{i+1}</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+                      <span style={{ fontSize:14, fontWeight:isSel?700:500, color:isSel?"#1d4ed8":"#1e293b" }}>{item.nome}</span>
+                      <span style={{ fontSize:11, color:"#94a3b8" }}>· {item.regiao}</span>
+                    </div>
+                    <div style={{ background:"#e2e8f0", borderRadius:4, height:5 }}>
+                      <div style={{ background:ri2.bar, borderRadius:4, height:5, width:`${item.risco}%` }} />
+                    </div>
+                  </div>
+                  <span style={{ fontSize:12, color:"#64748b" }}>{d2.icon} {d2.nome}</span>
+                  <span style={{ background:ri2.bg, color:ri2.text, fontSize:13, fontWeight:700, padding:"3px 12px", borderRadius:20, minWidth:52, textAlign:"center" }}>{item.risco}%</span>
+                  <span style={{ fontSize:11, background:ri2.bg, color:ri2.text, padding:"2px 10px", borderRadius:12, minWidth:62, textAlign:"center" }}>{ri2.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ════════ REGIÕES ════════ */}
+        {tab === "regioes" && (
+          <div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(150px,1fr))", gap:12, marginBottom:20 }}>
+              {porRegiao.map(({ reg, avg, n }) => {
+                const ri2 = getRisco(avg);
+                return (
+                  <div key={reg} style={{ background:ri2.bg, borderRadius:12, padding:"18px 20px" }}>
+                    <p style={{ margin:"0 0 3px", fontSize:10, fontWeight:700, color:ri2.text, textTransform:"uppercase", letterSpacing:1.2 }}>{reg}</p>
+                    <p style={{ margin:"0 0 8px", fontSize:11, color:ri2.text, opacity:0.65 }}>{n} municípios</p>
+                    <p style={{ margin:0, fontSize:34, fontWeight:800, color:ri2.bar, letterSpacing:-1 }}>{avg}<span style={{ fontSize:16 }}>%</span></p>
+                    <p style={{ margin:"4px 0 0", fontSize:12, color:ri2.text }}>{ri2.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {regioes.map(reg => {
+              const cidsReg = ranking.filter(r => r.regiao === reg);
+              return (
+                <div key={reg} className="card" style={{ marginBottom:14, overflow:"hidden" }}>
+                  <div style={{ padding:"12px 20px", background:"#f8fafc", borderBottom:"1px solid #e2e8f0" }}>
+                    <p style={{ margin:0, fontSize:13, fontWeight:700, color:"#334155" }}>Região {reg}</p>
+                  </div>
+                  {cidsReg.map(item => {
+                    const ri2 = getRisco(item.risco);
+                    const dd  = CITIES[item.nome];
+                    const d2  = getDoenca(dd.chuva, dd.casos, dd.temp);
+                    return (
+                      <div key={item.nome} className="row-item"
+                        onClick={() => { setCidade(item.nome); setTab("painel"); }}
+                        style={{ padding:"11px 20px", borderBottom:"1px solid #f8fafc", cursor:"pointer", display:"flex", alignItems:"center", gap:12 }}>
+                        <span style={{ flex:1, fontSize:13, color:"#1e293b" }}>{item.nome}</span>
+                        <span style={{ fontSize:12, color:"#64748b" }}>{d2.icon} {d2.nome}</span>
+                        <div style={{ width:80, background:"#e2e8f0", borderRadius:4, height:5 }}>
+                          <div style={{ background:ri2.bar, borderRadius:4, height:5, width:`${item.risco}%` }} />
+                        </div>
+                        <span style={{ fontSize:12, fontWeight:700, color:ri2.text, background:ri2.bg, padding:"3px 10px", borderRadius:12, minWidth:46, textAlign:"center" }}>{item.risco}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Rodapé */}
+        <div style={{ marginTop:28, paddingTop:14, borderTop:"1px solid #e2e8f0", display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:8, fontSize:11, color:"#94a3b8" }}>
+          <span>VIGIA GOIÁS AI v2.0 — Dados simulados para fins de pesquisa e desenvolvimento</span>
+          <span>Secretaria de Saúde · Estado de Goiás · {new Date().getFullYear()}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
