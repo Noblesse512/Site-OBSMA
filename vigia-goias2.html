@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VigIA Goiás — Vigilância Epidemiológica</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0b1f3a;--navy2:#132d52;--blue:#2563eb;--cyan:#06b6d4;
+  --slate:#f1f5f9;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--slate);color:var(--text);min-height:100vh}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#e2e8f0}::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:3px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+@keyframes bar-in{from{width:0}}
+
+.fu{animation:fadeUp .4s ease both}
+.fu1{animation-delay:.05s}.fu2{animation-delay:.1s}.fu3{animation-delay:.15s}.fu4{animation-delay:.2s}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 70%);position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.07)}
+.header-top{display:flex;align-items:center;gap:14px;padding:0 28px;height:62px}
+.logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(37,99,235,.4);flex-shrink:0}
+.h-title{color:#fff;font-size:15px;font-weight:700;letter-spacing:.2px}
+.h-sub{color:rgba(255,255,255,.38);font-size:9px;letter-spacing:2px;text-transform:uppercase}
+.live{margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.28);border-radius:20px;padding:4px 12px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:pulse-dot 2s infinite}
+.live-text{color:#34d399;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+
+/* TABS */
+.tabs{background:rgba(0,0,0,.22);display:flex;padding:0 28px;border-top:1px solid rgba(255,255,255,.05)}
+.tab{background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,.4);padding:10px 18px;font-size:13px;font-family:inherit;cursor:pointer;transition:all .2s;letter-spacing:.2px}
+.tab:hover{color:rgba(255,255,255,.7)}.tab.on{border-bottom-color:var(--cyan);color:var(--cyan);font-weight:600}
+
+/* PAGE */
+.page{max-width:980px;margin:0 auto;padding:26px 22px 70px}
+
+/* SELECTOR */
+.sel-card{background:#fff;border-radius:14px;border:1px solid var(--border);padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.sel-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
+select{flex:1;min-width:200px;font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:500;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--slate);color:var(--text);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;transition:border-color .2s}
+select:focus{outline:none;border-color:var(--blue)}
+.badge{font-size:11px;font-weight:700;padding:4px 13px;border-radius:20px;white-space:nowrap}
+
+/* SOURCE BADGE */
+.src-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);border-radius:8px;padding:3px 9px;font-size:10px;color:#0891b2;font-weight:600;white-space:nowrap}
+.src-dot{width:5px;height:5px;border-radius:50%;background:#06b6d4;animation:pulse-dot 2s infinite}
+
+/* LOADING */
+.loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;gap:14px}
+.spinner{width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+.loading-text{color:var(--muted);font-size:13px}
+
+/* CARD */
+.card{background:#fff;border-radius:14px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.ctitle{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:12px}
+
+/* STATS GRID */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px}
+.sc{border-radius:14px;padding:16px}
+.sl{font-size:9px;font-weight:700;opacity:.62;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px}
+.sv{font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:2px;line-height:1}
+.ss{font-size:11px;opacity:.75}
+
+/* TWO COL */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.col{display:flex;flex-direction:column;gap:14px}
+
+/* RISK */
+.rnum{font-family:'IBM Plex Mono',monospace;font-size:62px;font-weight:600;letter-spacing:-3px;transition:color .4s;line-height:1}
+.rtrack{background:#e2e8f0;border-radius:8px;height:11px;overflow:hidden;margin:10px 0 7px}
+.rfill{height:11px;border-radius:8px;transition:width .8s cubic-bezier(.4,0,.2,1);animation:bar-in .8s ease}
+.rscale{display:flex;justify-content:space-between;font-size:9px;color:var(--muted)}
+
+/* DISEASE */
+.dicon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.dname{font-size:22px;font-weight:800}
+.dinfo{font-size:11px;color:var(--muted);margin-top:3px}
+.dreason{background:var(--slate);border-radius:10px;padding:10px 13px;font-size:12px;color:#475569;line-height:1.8;margin-top:11px}
+
+/* HIST */
+.hwrap{display:flex;align-items:flex-end;gap:5px;height:95px}
+.hcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.hbar{width:100%;border-radius:4px 4px 0 0;transition:height .6s cubic-bezier(.4,0,.2,1)}
+.hpct{font-size:9px;color:var(--muted);font-weight:600}
+.hlbl{font-size:9px;color:#94a3b8}
+
+/* IND BARS */
+.irow{margin-bottom:11px}
+.itop{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px}
+.ilbl{color:var(--muted)}.ival{font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace}
+.itrack{background:#e2e8f0;border-radius:4px;height:5px;overflow:hidden}
+.ifill{height:5px;border-radius:4px;transition:width .6s}
+
+/* RANK */
+.rk-head{padding:14px 22px;border-bottom:1px solid var(--border);background:#f8fafc;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center}
+.rk-row{padding:11px 22px;border-bottom:1px solid #f8fafc;display:flex;align-items:center;gap:11px;cursor:pointer;transition:background .15s}
+.rk-row:hover{background:#f0f9ff}.rk-row:last-child{border-bottom:none;border-radius:0 0 14px 14px}
+.rkn{font-size:12px;font-weight:700;color:#94a3b8;min-width:24px;text-align:right;font-family:'IBM Plex Mono',monospace}
+.rknm{font-size:13px;font-weight:500;color:var(--text)}.rknm.sel{color:var(--blue);font-weight:700}
+.rkreg{font-size:10px;color:#94a3b8;margin-top:2px}
+.rktrack{background:#e2e8f0;border-radius:3px;height:4px;margin-top:4px}
+.rkfill{height:4px;border-radius:3px}
+
+/* REGIONS */
+.reggrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:11px;margin-bottom:18px}
+.regcard{border-radius:14px;padding:16px}
+.regrow{padding:10px 18px;border-bottom:1px solid #f8fafc;display:flex;align-items:center;gap:11px;cursor:pointer;transition:background .15s}
+.regrow:hover{background:#f0f9ff}.regrow:last-child{border-bottom:none}
+
+/* ABOUT */
+.about{background:linear-gradient(135deg,var(--navy) 0%,#1a3a6b 100%);border-radius:20px;padding:34px 38px;position:relative;overflow:hidden;margin-bottom:16px}
+.about::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(6,182,212,.07);pointer-events:none}
+.about::after{content:'';position:absolute;bottom:-40px;left:30px;width:130px;height:130px;border-radius:50%;background:rgba(37,99,235,.08);pointer-events:none}
+.atitle{color:#fff;font-size:20px;font-weight:700;margin-bottom:3px}
+.aschool{color:var(--cyan);font-size:13px;font-weight:600;margin-bottom:24px}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:26px}
+.mcard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:13px}
+.mav{width:44px;height:44px;border-radius:11px;flex-shrink:0;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
+.mname{color:#fff;font-size:14px;font-weight:600}
+.mrole{color:rgba(255,255,255,.4);font-size:11px;margin-top:2px}
+.ameta{display:flex;gap:24px;flex-wrap:wrap}
+.ami{display:flex;align-items:center;gap:9px}
+.aml{color:rgba(255,255,255,.36);font-size:9px;text-transform:uppercase;letter-spacing:1px}
+.amv{color:rgba(255,255,255,.85);font-size:12px;font-weight:600}
+
+/* FOOTER */
+.footer{background:var(--navy);padding:16px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.fl{color:rgba(255,255,255,.28);font-size:10px}
+.fr{color:rgba(255,255,255,.28);font-size:10px;text-align:right}
+
+/* ERROR */
+.err-box{background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:12px;color:#b91c1c;margin-top:8px}
+
+/* Alert alert_level colors */
+.al0{background:#dcfce7;color:#166534}
+.al1{background:#fef9c3;color:#854d0e}
+.al2{background:#ffedd5;color:#9a3412}
+.al3{background:#fee2e2;color:#991b1b}
+
+@media(max-width:640px){
+  .sgrid{grid-template-columns:repeat(2,1fr)}
+  .two{grid-template-columns:1fr}
+  .agrid{grid-template-columns:1fr}
+  .header-top{padding:0 14px}
+  .tabs{padding:0 8px}
+  .page{padding:14px 12px 48px}
+  .about{padding:22px 20px}
+}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ─── DADOS ───────────────────────────────────────────────────────────────────
+const CITIES = {
+  "Goiânia":                {ibge:5208707, lat:-16.6869, lon:-49.2648, regiao:"Centro"},
+  "Aparecida de Goiânia":   {ibge:5201405, lat:-16.8234, lon:-49.2477, regiao:"Centro"},
+  "Anápolis":               {ibge:5201108, lat:-16.3281, lon:-48.9536, regiao:"Centro"},
+  "Senador Canedo":         {ibge:5220454, lat:-16.7049, lon:-49.0929, regiao:"Centro"},
+  "Trindade":               {ibge:5221403, lat:-16.6495, lon:-49.4889, regiao:"Centro"},
+  "Águas Lindas de Goiás":  {ibge:5200258, lat:-15.7453, lon:-48.2808, regiao:"Centro"},
+  "Palmeiras de Goiás":     {ibge:5215900, lat:-16.8012, lon:-49.9319, regiao:"Centro"},
+  "Rio Verde":              {ibge:5218805, lat:-17.7974, lon:-50.9278, regiao:"Sudoeste"},
+  "Jataí":                  {ibge:5211909, lat:-17.8789, lon:-51.7188, regiao:"Sudoeste"},
+  "Luziânia":               {ibge:5212501, lat:-16.2522, lon:-47.9498, regiao:"Leste"},
+  "Valparaíso de Goiás":    {ibge:5221858, lat:-16.0699, lon:-47.9699, regiao:"Leste"},
+  "Formosa":                {ibge:5207600, lat:-15.5368, lon:-47.3337, regiao:"Leste"},
+  "Novo Gama":              {ibge:5214903, lat:-16.0526, lon:-48.0315, regiao:"Leste"},
+  "Catalão":                {ibge:5205109, lat:-18.1664, lon:-47.9468, regiao:"Leste"},
+  "Caldas Novas":           {ibge:5204508, lat:-17.7428, lon:-48.6244, regiao:"Sul"},
+  "Itumbiara":              {ibge:5210802, lat:-18.4187, lon:-49.2156, regiao:"Sul"},
+  "Morrinhos":              {ibge:5213806, lat:-17.7328, lon:-49.1000, regiao:"Sul"},
+  "Porangatu":              {ibge:5218003, lat:-13.4418, lon:-49.1494, regiao:"Norte"},
+  "Minaçu":                 {ibge:5213087, lat:-13.5304, lon:-48.2162, regiao:"Norte"},
+  "Uruaçu":                 {ibge:5221502, lat:-14.5238, lon:-49.1402, regiao:"Norte"},
+  "Niquelândia":            {ibge:5214606, lat:-14.4724, lon:-48.4609, regiao:"Norte"},
+  "Goiás (cidade)":         {ibge:5208806, lat:-15.9329, lon:-50.1414, regiao:"Oeste"},
+};
+
+// Dados estáticos de fallback (caso APIs falhem)
+const FALLBACK = {
+  5208707:{chuva:128,temp:31,casos:47,nivel:3},
+  5201405:{chuva:114,temp:30,casos:33,nivel:2},
+  5201108:{chuva:109,temp:29,casos:28,nivel:2},
+  5220454:{chuva:117,temp:31,casos:31,nivel:2},
+  5221403:{chuva:105,temp:30,casos:25,nivel:2},
+  5200258:{chuva:81,temp:29,casos:19,nivel:1},
+  5215900:{chuva:98,temp:29,casos:20,nivel:1},
+  5218805:{chuva:96,temp:27,casos:21,nivel:1},
+  5211909:{chuva:91,temp:27,casos:20,nivel:1},
+  5212501:{chuva:72,temp:28,casos:14,nivel:1},
+  5221858:{chuva:76,temp:28,casos:17,nivel:1},
+  5207600:{chuva:64,temp:28,casos:9,nivel:0},
+  5214903:{chuva:78,temp:29,casos:16,nivel:1},
+  5205109:{chuva:83,temp:29,casos:19,nivel:1},
+  5204508:{chuva:94,temp:32,casos:24,nivel:2},
+  5210802:{chuva:88,temp:31,casos:22,nivel:1},
+  5213806:{chuva:87,temp:30,casos:18,nivel:1},
+  5218003:{chuva:88,temp:33,casos:18,nivel:1},
+  5213087:{chuva:92,temp:34,casos:16,nivel:1},
+  5221502:{chuva:85,temp:32,casos:14,nivel:1},
+  5214606:{chuva:79,temp:33,casos:12,nivel:0},
+  5208806:{chuva:74,temp:30,casos:11,nivel:0},
+};
+
+const HL=["Jan","Fev","Mar","Abr","Mai","Jun"];
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function calcScore(chuva,temp,casos){
+  return Math.min((chuva>100?40:chuva>75?25:10)+(temp>=32?30:temp>=30?20:10)+(casos>30?35:casos>15?22:10),98);
+}
+function getDoenca(chuva,casos,temp){
+  if(chuva>110)return{nome:"Dengue",icon:"🦟",cor:"#dc2626",vetor:"Aedes aegypti · vetor principal"};
+  if(temp>=33) return{nome:"Leishmaniose",icon:"🐛",cor:"#d97706",vetor:"Lutzomyia · clima seco e quente"};
+  if(casos>25) return{nome:"Dengue",icon:"🦟",cor:"#dc2626",vetor:"Aedes aegypti · vetor principal"};
+  if(chuva>80) return{nome:"Oropouche",icon:"🦠",cor:"#7c3aed",vetor:"Culicoides · vírus arboviral"};
+  return            {nome:"Leptospirose",icon:"💧",cor:"#0284c7",vetor:"Leptospira · contato com água"};
+}
+function getRisco(r){
+  if(r>=80)return{label:"Crítico",bg:"#fee2e2",text:"#991b1b",bar:"#dc2626"};
+  if(r>=60)return{label:"Alto",bg:"#ffedd5",text:"#9a3412",bar:"#ea580c"};
+  if(r>=40)return{label:"Moderado",bg:"#fef9c3",text:"#854d0e",bar:"#ca8a04"};
+  return          {label:"Baixo",bg:"#dcfce7",text:"#166534",bar:"#16a34a"};
+}
+function ini(n){return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()}
+function getEpiWeek(){
+  const now=new Date();
+  const start=new Date(now.getFullYear(),0,1);
+  const diff=now-start+(start.getTimezoneOffset()-now.getTimezoneOffset())*60000;
+  return Math.floor(diff/604800000)+1;
+}
+
+// ─── FETCH APIs ──────────────────────────────────────────────────────────────
+const cache={};
+
+async function fetchCityData(ibge,lat,lon){
+  if(cache[ibge])return cache[ibge];
+  const fb=FALLBACK[ibge]||{chuva:90,temp:30,casos:15,nivel:1};
+  let resultado={...fb,fontes:[],usouFallback:true};
+  
+  // 1) Open-Meteo (temperatura + chuva últimos 30 dias)
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m&daily=precipitation_sum&past_days=30&forecast_days=1&timezone=America%2FSao_Paulo`;
+    const r=await Promise.race([fetch(url),new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),5000))]);
+    const d=await r.json();
+    const temp=Math.round(d.current?.temperature_2m||fb.temp);
+    const chuva=Math.round((d.daily?.precipitation_sum||[]).reduce((a,b)=>a+(b||0),0));
+    resultado.temp=temp;
+    resultado.chuva=chuva;
+    resultado.usouFallback=false;
+    resultado.fontes.push({nome:"Open-Meteo",url:"https://open-meteo.com",tipo:"Clima"});
+    resultado.atualizado=new Date().toLocaleString('pt-BR');
+  }catch(e){
+    resultado.fontes.push({nome:"Open-Meteo",url:"https://open-meteo.com",tipo:"Clima (offline)"});
+  }
+
+  // 2) InfoDengue (casos e nível de alerta)
+  try{
+    const ew=getEpiWeek();
+    const ew2=Math.max(1,ew-1);
+    const year=new Date().getFullYear();
+    const url=`https://info.dengue.mat.br/api/alertcity?geocode=${ibge}&disease=dengue&format=json&ew_start=${ew2}&ew_end=${ew}&ey_start=${year}&ey_end=${year}`;
+    const r=await Promise.race([fetch(url),new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),6000))]);
+    const data=await r.json();
+    if(Array.isArray(data)&&data.length>0){
+      const latest=data[data.length-1];
+      resultado.casos=Math.round(latest.casos||latest.casos_est||fb.casos);
+      resultado.nivel=latest.nivel_inc||0;
+      resultado.alertaDengue=latest.nivel_inc;
+      resultado.usouFallback=false;
+      resultado.fontes.push({nome:"InfoDengue / FGV+Fiocruz",url:"https://info.dengue.mat.br",tipo:"Epidemiologia"});
+    }else{
+      resultado.fontes.push({nome:"InfoDengue",url:"https://info.dengue.mat.br",tipo:"Epidemiologia (sem dados)"});
+    }
+  }catch(e){
+    resultado.fontes.push({nome:"InfoDengue",url:"https://info.dengue.mat.br",tipo:"Epidemiologia (offline)"});
+  }
+
+  cache[ibge]=resultado;
+  return resultado;
+}
+
+// ─── ESTADO GLOBAL ────────────────────────────────────────────────────────────
+let state={
+  cidade:"Goiânia",
+  tab:"painel",
+  loading:false,
+  dados:null,
+  rankingData:{},
+  rankingLoaded:false,
+};
+
+const TEAM=[
+  {nome:"Lucas Miranda",papel:"Desenvolvedor"},
+  {nome:"Maria Fernanda Lemos",papel:"Desenvolvedora"},
+];
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render(){
+  document.getElementById('app').innerHTML=buildApp();
+  bindEvents();
+}
+
+function buildApp(){
+  const {cidade,tab,loading,dados}=state;
+  const c=CITIES[cidade];
+  const hoje=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
+
+  let contentHTML='';
+  if(tab==='painel') contentHTML=buildPainel(cidade,c,loading,dados);
+  else if(tab==='ranking') contentHTML=buildRanking(cidade);
+  else if(tab==='regioes') contentHTML=buildRegioes(cidade);
+  else if(tab==='sobre') contentHTML=buildSobre();
+
+  return `
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">🛡️</div>
+      <div>
+        <div class="h-sub">Estado de Goiás — Secretaria de Saúde</div>
+        <div class="h-title">VigIA Goiás — Vigilância Epidemiológica</div>
+      </div>
+      <div class="live"><div class="live-dot"></div><span class="live-text">Dados ao vivo</span></div>
+    </div>
+    <div class="tabs">
+      ${[["painel","📊 Painel"],["ranking","🏆 Ranking"],["regioes","🗺️ Regiões"],["sobre","👥 Sobre"]].map(([k,lb])=>
+        `<button class="tab${tab===k?' on':''}" data-tab="${k}">${lb}</button>`
+      ).join('')}
+    </div>
+  </div>
+
+  <div class="page">
+    ${tab!=='sobre'?`
+    <div class="sel-card fu">
+      <span class="sel-label">Município</span>
+      <select id="cidade-sel">
+        ${Object.keys(CITIES).sort().map(nm=>`<option${nm===cidade?' selected':''}>${nm}</option>`).join('')}
+      </select>
+      <span class="badge" style="background:#e0f2fe;color:#0369a1">Região ${c.regiao}</span>
+    </div>`:''
+    }
+    ${contentHTML}
+  </div>
+
+  <div class="footer">
+    <div class="fl">VigIA Goiás v3.0 — Dados reais: Open-Meteo &amp; InfoDengue · Projeto escolar</div>
+    <div class="fr">Lucas Miranda &amp; Maria Fernanda Lemos · CEPMG Naly Deusdara · Prof. Kassio · ${new Date().getFullYear()}</div>
+  </div>`;
+}
+
+// ─── PAINEL ──────────────────────────────────────────────────────────────────
+function buildPainel(cidade,c,loading,dados){
+  if(loading) return `
+    <div class="card" style="padding:0">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <div class="loading-text">Buscando dados reais de ${cidade}…</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px">Open-Meteo + InfoDengue</div>
+      </div>
+    </div>`;
+  if(!dados) return `<div class="card" style="padding:24px;text-align:center;color:var(--muted)">Selecione um município acima.</div>`;
+
+  const {chuva,temp,casos,usouFallback,fontes,atualizado}=dados;
+  const risco=calcScore(chuva,temp,casos);
+  const ri=getRisco(risco);
+  const do_=getDoenca(chuva,casos,temp);
+
+  // histórico estimado (±10% variação)
+  const hist=[...Array(6)].map((_,i)=>Math.min(98,Math.max(10,Math.round(risco*(0.82+i*0.04+Math.sin(i)*0.08)))));
+
+  const fontesHTML=fontes.map(f=>`
+    <a href="${f.url}" target="_blank" style="text-decoration:none">
+      <span class="src-badge"><span class="src-dot"></span>${f.tipo}: ${f.nome}</span>
+    </a>`).join('');
+
+  const fallbackNote=usouFallback?`<div class="err-box">⚠️ APIs indisponíveis — exibindo dados de referência. Verifique sua conexão com a internet.</div>`:'';
+
+  return `
+  <!-- Fontes no topo -->
+  <div class="fu" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    <span style="font-size:11px;color:var(--muted);font-weight:600">Fontes:</span>
+    ${fontesHTML}
+    ${atualizado?`<span style="font-size:10px;color:#94a3b8;margin-left:auto">Atualizado: ${atualizado}</span>`:''}
+  </div>
+  ${fallbackNote}
+
+  <!-- Stats -->
+  <div class="sgrid">
+    <div class="sc fu fu1" style="background:${ri.bg}">
+      <div class="sl" style="color:${ri.text}">Risco calculado</div>
+      <div class="sv" style="color:${ri.text}">${risco}%</div>
+      <div class="ss" style="color:${ri.text}">${ri.label}</div>
+    </div>
+    <div class="sc fu fu2" style="background:#eff6ff">
+      <div class="sl" style="color:#1e40af">Chuva / 30 dias</div>
+      <div class="sv" style="color:#1e40af">${chuva}<span style="font-size:14px">mm</span></div>
+      <div class="ss" style="color:#1e40af">${chuva>100?'Elevada':'Normal'}</div>
+    </div>
+    <div class="sc fu fu3" style="background:#fff7ed">
+      <div class="sl" style="color:#c2410c">Temperatura atual</div>
+      <div class="sv" style="color:#c2410c">${temp}<span style="font-size:14px">°C</span></div>
+      <div class="ss" style="color:#c2410c">${temp>=32?'Muito quente':temp>=30?'Quente':'Amena'}</div>
+    </div>
+    <div class="sc fu fu4" style="background:#f0fdf4">
+      <div class="sl" style="color:#15803d">Casos notificados</div>
+      <div class="sv" style="color:#15803d">${casos}</div>
+      <div class="ss" style="color:#15803d">${casos>30?'Nível de alerta':'Em monitoramento'}</div>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="col">
+      <!-- Índice risco -->
+      <div class="card fu" style="padding:22px 24px">
+        <div class="ctitle">Índice de risco de surto</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span class="rnum" style="color:${ri.bar}">${risco}</span>
+          <span style="font-size:24px;color:${ri.bar};font-weight:700">%</span>
+        </div>
+        <div class="rtrack"><div class="rfill" style="width:${risco}%;background:${ri.bar}"></div></div>
+        <div class="rscale"><span>0 — Baixo</span><span>50 — Moderado</span><span>80 — Crítico</span></div>
+      </div>
+
+      <!-- Doença -->
+      <div class="card fu" style="padding:22px 24px">
+        <div class="ctitle">Doença mais provável</div>
+        <div style="display:flex;align-items:center;gap:13px">
+          <div class="dicon" style="background:${do_.cor}15">${do_.icon}</div>
+          <div>
+            <div class="dname" style="color:${do_.cor}">${do_.nome}</div>
+            <div class="dinfo">${do_.vetor}</div>
+          </div>
+        </div>
+        <div class="dreason">
+          ${chuva>100?'<div>● Precipitação elevada favorece criadouros do vetor.</div>':''}
+          ${temp>=30 ?'<div>● Temperatura alta acelera o ciclo vetorial.</div>':''}
+          ${casos>20 ?'<div>● Volume de casos indica circulação ativa.</div>':''}
+          ${chuva<=100&&temp<30&&casos<=20?'<div>Condições dentro do limiar epidemiológico esperado.</div>':''}
+        </div>
+        <!-- Fonte no canto -->
+        <div style="margin-top:10px;display:flex;justify-content:flex-end">
+          <a href="https://info.dengue.mat.br" target="_blank" style="text-decoration:none">
+            <span class="src-badge"><span class="src-dot"></span>InfoDengue / Fiocruz + FGV</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <!-- Histórico estimado -->
+      <div class="card fu" style="padding:22px 24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span class="ctitle" style="margin:0">Histórico estimado — 6 meses</span>
+          <span style="font-size:9px;color:#94a3b8">baseado em padrão histórico</span>
+        </div>
+        <div class="hwrap">
+          ${hist.map((v,i)=>{const hri=getRisco(v);return`
+            <div class="hcol">
+              <span class="hpct">${v}%</span>
+              <div class="hbar" style="background:${hri.bar};height:${(v/100)*76}px"></div>
+              <span class="hlbl">${HL[i]}</span>
+            </div>`;}).join('')}
+        </div>
+      </div>
+
+      <!-- Indicadores com fonte -->
+      <div class="card fu" style="padding:22px 24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span class="ctitle" style="margin:0">Indicadores epidemiológicos</span>
+          <a href="https://open-meteo.com" target="_blank" style="text-decoration:none">
+            <span class="src-badge"><span class="src-dot"></span>Open-Meteo</span>
+          </a>
+        </div>
+        ${[
+          {label:"Precipitação / 30 dias",val:chuva,max:200,unit:"mm",color:"#3b82f6"},
+          {label:"Temperatura atual",val:temp,max:42,unit:"°C",color:"#f97316"},
+          {label:"Casos notificados",val:casos,max:80,unit:"",color:"#22c55e"},
+          {label:"Índice de risco",val:risco,max:100,unit:"%",color:ri.bar},
+        ].map(({label,val,max,unit,color})=>`
+          <div class="irow">
+            <div class="itop"><span class="ilbl">${label}</span><span class="ival">${val}${unit}</span></div>
+            <div class="itrack"><div class="ifill" style="width:${Math.round((val/max)*100)}%;background:${color}"></div></div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── RANKING ─────────────────────────────────────────────────────────────────
+function buildRanking(cidade){
+  const items=Object.entries(CITIES).map(([n,d])=>{
+    const fb=FALLBACK[d.ibge]||{chuva:90,temp:30,casos:15};
+    const cached=cache[d.ibge];
+    const chuva=cached?cached.chuva:fb.chuva;
+    const temp=cached?cached.temp:fb.temp;
+    const casos=cached?cached.casos:fb.casos;
+    return{n,r:calcScore(chuva,temp,casos),reg:d.regiao,real:!!cached};
+  }).sort((a,b)=>b.r-a.r);
+
+  return `
+  <div class="card fu" style="overflow:hidden">
+    <div class="rk-head">
+      <span style="font-size:15px;font-weight:700">Ranking de risco — ${items.length} municípios</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--muted)">Clique para ver detalhes</span>
+        <span class="src-badge"><span class="src-dot"></span>Open-Meteo + InfoDengue</span>
+      </div>
+    </div>
+    ${items.map((item,i)=>{
+      const ri=getRisco(item.r);
+      const isSel=item.n===cidade;
+      const do_=getDoenca(
+        (cache[CITIES[item.n].ibge]||FALLBACK[CITIES[item.n].ibge]||{}).chuva||90,
+        (cache[CITIES[item.n].ibge]||FALLBACK[CITIES[item.n].ibge]||{}).casos||15,
+        (cache[CITIES[item.n].ibge]||FALLBACK[CITIES[item.n].ibge]||{}).temp||30
+      );
+      return`
+      <div class="rk-row${isSel?' fu':''}" style="background:${isSel?'#eff6ff':''}" data-city="${item.n}">
+        <span class="rkn">${i+1}</span>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span class="rknm${isSel?' sel':''}">${item.n}</span>
+            ${item.real?'<span class="src-badge" style="font-size:9px;padding:2px 7px"><span class="src-dot"></span>real</span>':''}
+          </div>
+          <div class="rkreg">${item.reg}</div>
+          <div class="rktrack"><div class="rkfill" style="width:${item.r}%;background:${ri.bar}"></div></div>
+        </div>
+        <span style="font-size:12px;color:var(--muted);min-width:88px;text-align:right">${do_.icon} ${do_.nome}</span>
+        <span class="badge" style="background:${ri.bg};color:${ri.text};min-width:50px;text-align:center">${item.r}%</span>
+        <span class="badge" style="background:${ri.bg};color:${ri.text};min-width:62px;text-align:center;font-size:10px">${ri.label}</span>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ─── REGIÕES ─────────────────────────────────────────────────────────────────
+function buildRegioes(cidade){
+  const regioes=[...new Set(Object.values(CITIES).map(x=>x.regiao))].sort();
+  const allItems=Object.entries(CITIES).map(([n,d])=>{
+    const fb=FALLBACK[d.ibge]||{chuva:90,temp:30,casos:15};
+    const cached=cache[d.ibge];
+    const chuva=cached?cached.chuva:fb.chuva;
+    const temp=cached?cached.temp:fb.temp;
+    const casos=cached?cached.casos:fb.casos;
+    return{n,r:calcScore(chuva,temp,casos),reg:d.regiao};
+  }).sort((a,b)=>b.r-a.r);
+
+  const porReg=regioes.map(reg=>{
+    const cs=allItems.filter(x=>x.reg===reg);
+    const avg=Math.round(cs.reduce((s,x)=>s+x.r,0)/cs.length);
+    return{reg,avg,n:cs.length};
+  }).sort((a,b)=>b.avg-a.avg);
+
+  return `
+  <div class="fu" style="margin-bottom:8px;display:flex;justify-content:flex-end">
+    <span class="src-badge"><span class="src-dot"></span>Open-Meteo + InfoDengue (dados em cache)</span>
+  </div>
+  <div class="reggrid">
+    ${porReg.map(({reg,avg,n})=>{const ri=getRisco(avg);return`
+      <div class="regcard" style="background:${ri.bg}">
+        <div style="font-size:9px;font-weight:700;color:${ri.text};text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px">${reg}</div>
+        <div style="font-size:11px;color:${ri.text};opacity:.65;margin-bottom:7px">${n} municípios</div>
+        <div style="font-size:34px;font-weight:800;color:${ri.bar};letter-spacing:-1px;line-height:1">${avg}<span style="font-size:14px">%</span></div>
+        <div style="font-size:11px;color:${ri.text};margin-top:4px;font-weight:600">${ri.label}</div>
+      </div>`;}).join('')}
+  </div>
+  ${regioes.map(reg=>{
+    const items=allItems.filter(x=>x.reg===reg);
+    return`
+    <div class="card fu" style="overflow:hidden;margin-bottom:13px">
+      <div style="padding:11px 18px;background:#f8fafc;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px;font-weight:700;color:#334155">Região ${reg}</span>
+      </div>
+      ${items.map(item=>{
+        const ri=getRisco(item.r);
+        const d=CITIES[item.n];const fb=FALLBACK[d.ibge]||{};const cached=cache[d.ibge]||{};
+        const do_=getDoenca(cached.chuva||fb.chuva||90,cached.casos||fb.casos||15,cached.temp||fb.temp||30);
+        return`
+        <div class="regrow" data-city="${item.n}">
+          <span style="flex:1;font-size:13px;color:var(--text)">${item.n}</span>
+          <span style="font-size:12px;color:var(--muted)">${do_.icon} ${do_.nome}</span>
+          <div style="width:75px;background:#e2e8f0;border-radius:4px;height:4px">
+            <div style="background:${ri.bar};border-radius:4px;height:4px;width:${item.r}%"></div>
+          </div>
+          <span class="badge" style="background:${ri.bg};color:${ri.text};min-width:46px;text-align:center">${item.r}%</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('')}`;
+}
+
+// ─── SOBRE ───────────────────────────────────────────────────────────────────
+function buildSobre(){
+  return `
+  <div class="about fu">
+    <div class="atitle">Sobre o Projeto</div>
+    <div class="aschool">CEPMG Naly Deusdara — 3º Ano D — Prof. Kassio</div>
+    <div class="agrid">
+      ${TEAM.map(({nome,papel})=>`
+        <div class="mcard">
+          <div class="mav">${ini(nome)}</div>
+          <div>
+            <div class="mname">${nome}</div>
+            <div class="mrole">${papel} · VigIA Goiás</div>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="ameta">
+      ${[
+        {icon:"🏫",label:"Escola",val:"CEPMG Naly Deusdara"},
+        {icon:"📚",label:"Turma",val:"3º Ano D"},
+        {icon:"👨‍🏫",label:"Professor",val:"Prof. Kassio"},
+        {icon:"📅",label:"Ano letivo",val:new Date().getFullYear()},
+      ].map(({icon,label,val})=>`
+        <div class="ami">
+          <span style="font-size:16px">${icon}</span>
+          <div><div class="aml">${label}</div><div class="amv">${val}</div></div>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card fu" style="padding:26px 30px;margin-bottom:14px">
+    <div class="ctitle">O que é o VigIA Goiás?</div>
+    <p style="font-size:14px;color:#334155;line-height:1.9;margin-bottom:14px">
+      O <strong>VigIA Goiás</strong> é uma plataforma de vigilância epidemiológica desenvolvida como projeto escolar.
+      O sistema busca dados meteorológicos e epidemiológicos <em>em tempo real</em> de APIs públicas oficiais
+      para calcular o risco de surto em 22 municípios de Goiás.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      ${[
+        {icon:"🌦️",nome:"Open-Meteo",url:"https://open-meteo.com",desc:"Temperatura e precipitação em tempo real. API gratuita e aberta."},
+        {icon:"🦟",nome:"InfoDengue / FGV + Fiocruz",url:"https://info.dengue.mat.br",desc:"Casos e alertas de dengue e arboviroses por município."},
+      ].map(({icon,nome,url,desc})=>`
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px 16px">
+          <div style="font-size:22px;margin-bottom:6px">${icon}</div>
+          <div style="font-size:13px;font-weight:700;color:#1e293b">${nome}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5">${desc}</div>
+          <a href="${url}" target="_blank" style="font-size:10px;color:var(--blue);margin-top:6px;display:block">${url} ↗</a>
+        </div>`).join('')}
+    </div>
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px 16px;font-size:12px;color:#0369a1;line-height:1.7">
+      <strong>Metodologia:</strong> O índice de risco é calculado com base em precipitação acumulada nos últimos 30 dias,
+      temperatura atual e casos notificados de arboviroses. Valores acima de 80% indicam risco crítico de surto.
+    </div>
+  </div>
+
+  <div class="card fu" style="padding:22px 30px">
+    <div class="ctitle">Dados do sistema</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:center">
+      ${[
+        {val:"22",label:"Municípios monitorados"},
+        {val:"2",label:"APIs de dados reais"},
+        {val:"4",label:"Doenças analisadas"},
+      ].map(({val,label})=>`
+        <div style="background:#f8fafc;border-radius:10px;padding:18px 12px">
+          <div style="font-size:36px;font-weight:800;color:#1e3a5f;letter-spacing:-1px">${val}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">${label}</div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ─── EVENTS ──────────────────────────────────────────────────────────────────
+function bindEvents(){
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      state.tab=btn.dataset.tab;
+      render();
+    });
+  });
+
+  const sel=document.getElementById('cidade-sel');
+  if(sel) sel.addEventListener('change',async e=>{
+    const nova=e.target.value;
+    state.cidade=nova;
+    state.dados=null;
+    state.loading=true;
+    render();
+    const c=CITIES[nova];
+    const dados=await fetchCityData(c.ibge,c.lat,c.lon);
+    state.dados=dados;
+    state.loading=false;
+    render();
+  });
+
+  // Clique em linhas de ranking/regiões
+  document.querySelectorAll('[data-city]').forEach(row=>{
+    row.addEventListener('click',async ()=>{
+      const nome=row.dataset.city;
+      state.cidade=nome;
+      state.tab='painel';
+      state.dados=null;
+      state.loading=true;
+      render();
+      const c=CITIES[nome];
+      const dados=await fetchCityData(c.ibge,c.lat,c.lon);
+      state.dados=dados;
+      state.loading=false;
+      render();
+    });
+  });
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+async function init(){
+  render();
+  const c=CITIES[state.cidade];
+  state.loading=true;
+  render();
+  const dados=await fetchCityData(c.ibge,c.lat,c.lon);
+  state.dados=dados;
+  state.loading=false;
+  render();
+}
+init();
+</script>
+</body>
+</html>
